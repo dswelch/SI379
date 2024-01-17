@@ -1,0 +1,9 @@
+#container {
+    background-color: #CCC;
+}
+.highlighted {
+    background-color: green;
+}
+#container .highlighted {
+    background-color: yellow;
+}
