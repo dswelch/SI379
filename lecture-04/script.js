@@ -14,6 +14,4 @@ const toggleColor = () => {
     }
 }
 
-while(true){
-    setTimeout(toggleColor, 2000);
-}
+setInterval(toggleColor, 2000);
