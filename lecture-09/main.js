@@ -10,7 +10,7 @@ function toggleColor() {
     }
     colorTimeout = setTimeout(toggleColor, 3000);
 }
-box.addEventListener("click", toggleColor)
+box.addEventListener("click", toggleColor);
 
 let colorTimeout = setTimeout(toggleColor, 3000);
 toggleColor();

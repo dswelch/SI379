@@ -1,31 +1,72 @@
-const imgList = document.querySelector("div#thumbnails");
-let eventList;
-// get initial event list
-getUMEvents((list) => {
-    console.log(list);
-    eventList = list;
-});
-console.log(eventList);
-// getting the first index, don't know where it will be
-let currentIndex = -1;
-function getInitialIndex(){
-    const selectedEvent = document.querySelector("#selected");
-    for (let i = 0; i < eventList.length; i++) {
-        // assuming that titles are unique to events
-        if (selectedEvent.event_title === eventList[i].event_title){
-            currentIndex = i;
-        }
+const imgListDiv = document.querySelector("div#thumbnails");
+// initial event list
+const eventList = [];
+// index of event currently selected
+let currentIndex = 0;
+// timeout in milliseconds
+const TIMEOUT_LENGTH = 3000
+
+function getEventList(list){
+    for (let i = 0; i < list.length; i++) {
+        eventList.push(list[i]);
+        const curImg = document.createElement("img");
+        curImg.setAttribute("id", `index${i}`);
+        curImg.setAttribute("src", list[i].styled_images.event_thumb);
+        imgListDiv.append(curImg);
     }
-}
-// make sure we found something
-if (currentIndex === -1) {
-    console.log("didn't find initial selected event");
+    // set first event to be selected
+    selectEvent(0);
 }
 
-// setSelectedIndex((i+1)%events.length);
-function setSelectedIndex(){
+function moveSelected(desiredIndex){
+    // clear the timeout
+    clearTimeout(moveTimeout);
+    // select new event
+    selectEvent(desiredIndex);
 
-};
+    // move currentIndex 
+    currentIndex = (desiredIndex)%eventList.length;
 
-// TODO need to make moveSelected function, copy lecture-09 for timeout clearing
-const timeout = setTimeout(moveSelected, 10000);
+    // set the timeout
+    moveTimeout = setTimeout(function(){
+        moveSelected(currentIndex+1);
+    }, TIMEOUT_LENGTH);
+}
+
+function selectEvent(index){
+    console.log(currentIndex);
+    // deselect current thumbnail
+    const curThumbnail = document.querySelector(`#index${currentIndex}`);
+    curThumbnail.classList.remove("selected");
+
+    // select thumbnail
+    const nextThumbnail = document.querySelector(`#index${index}`);
+    nextThumbnail.classList.add("selected");
+
+    const event = eventList[index];
+    // create new selected element
+    const selected = document.querySelector("#selected");
+    // image
+    const image = document.querySelector("#selected-image");
+    image.setAttribute("src", event.image_url);
+    // title
+    const title = document.querySelector("#selected-title");
+    title.innerText = event.event_title;
+    title.setAttribute("href", event.permalink);
+    // date
+    const date = document.querySelector("#selected-date");
+    date.innerText = getReadableTime(event.datetime_start);
+    // description
+    const description = document.querySelector("#selected-description");
+    description.innerText = event.description;
+
+    document.body.append(selected);
+}
+
+// gets event list and loads imgListDiv with the event images
+getUMEventsWithImages(getEventList);
+
+// set the timeout
+let moveTimeout = setTimeout(function(){
+    moveSelected(currentIndex+1);
+}, TIMEOUT_LENGTH);
