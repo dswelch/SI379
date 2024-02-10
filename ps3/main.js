@@ -4,7 +4,7 @@ const eventList = [];
 // index of event currently selected
 let currentIndex = 0;
 // timeout in milliseconds
-const TIMEOUT_LENGTH = 3000
+const TIMEOUT_LENGTH = 10000;
 
 function getEventList(list){
     for (let i = 0; i < list.length; i++) {
@@ -13,6 +13,9 @@ function getEventList(list){
         curImg.setAttribute("id", `index${i}`);
         curImg.setAttribute("src", list[i].styled_images.event_thumb);
         imgListDiv.append(curImg);
+        curImg.addEventListener("click", function(){
+            moveSelected(i);
+        });
     }
     // set first event to be selected
     selectEvent(0);
@@ -29,12 +32,11 @@ function moveSelected(desiredIndex){
 
     // set the timeout
     moveTimeout = setTimeout(function(){
-        moveSelected(currentIndex+1);
+        moveSelected((currentIndex+1)%eventList.length);
     }, TIMEOUT_LENGTH);
 }
 
 function selectEvent(index){
-    console.log(currentIndex);
     // deselect current thumbnail
     const curThumbnail = document.querySelector(`#index${currentIndex}`);
     curThumbnail.classList.remove("selected");
