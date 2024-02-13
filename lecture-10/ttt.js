@@ -29,15 +29,22 @@ function createBoard() {
             const cell = document.createElement("td"); // Create a cell
             row.append(cell); // ...and add it to the row
             cell.addEventListener("click", function(){
-                if(isEmpty(cell) && !gameOver){
-                    setCellValue(cell, currentPlayer);
-                    alternateCurrentPlayer();
-                    const res = getWinner();
-                    if (res != false){
-                        gameOver = true;
-                    }
-                }
+                clickOnCell(cell);
+                getComputerMove((cell) => {
+                    clickOnCell(cell);
+                });
             })
+        }
+    }
+}
+
+function clickOnCell(cell){
+    if(isEmpty(cell) && !gameOver){
+        setCellValue(cell, currentPlayer);
+        alternateCurrentPlayer();
+        const res = getWinner();
+        if (res != false){
+            gameOver = true;
         }
     }
 }
