@@ -168,7 +168,6 @@ async function makeTransparent(circle, duration) {
         function step() {
           const pct = (Date.now() - animationStarted) / duration;
           const val = fromVal + (toVal - fromVal) * pct;
-          console.log(val);
           circle.setAttribute("opacity", val);
           
           if(pct < 1) {
