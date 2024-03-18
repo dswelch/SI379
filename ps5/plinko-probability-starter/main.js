@@ -4,7 +4,6 @@ import chroma from "chroma-js";
 const BALL_COLOR = "#2F65A7";     // The color of the balls: [Arboretum Blue](https://brand.umich.edu/design-resources/colors/)
 const color_scale = chroma.scale(['blue', 'black']);
 
-const NUM_BALLS = 10;              // The number of balls to drop
 const GRAPH_HEIGHT = 300;          // The maximum height of the graph (in pixels)
 const BALL_RADIUS = 10;            // The radius of the balls (in pixels)
 const PEG_RADIUS = 3;              // The radius of the pegs (in pixels)
@@ -102,14 +101,14 @@ function drawBoard() {
             await moveCircleTo(circle, x, y, DELAY_BETWEEN_PEGS / parseFloat(speedInput.value)); // Move the ball to the new location
             const peg = pegs[row][col]; // The peg that the ball hit
             hitCounts[row][col]++; // Increment the hit count for this peg
-            peg.setAttribute('fill', color_scale(hitCounts[row][col]/NUM_BALLS));
+            peg.setAttribute('fill', color_scale(hitCounts[row][col]/numBallsInput.value));
         }
 
         const barIndex = Math.floor(col/2); // The index of the bar that corresponds to the final column (since there are 2 pegs per bar)
-        const newBarHeight = BAR_SCALE_FACTOR * hitCounts[NUM_LEVELS-1][col] / NUM_BALLS; // The new height of the bar
+        const newBarHeight = (BAR_SCALE_FACTOR * hitCounts[NUM_LEVELS-1][col]) / numBallsInput.value; // The new height of the bar
         const promise1 =  changeHeightTo(actualBars[barIndex], newBarHeight, DELAY_WHEN_DROP / parseFloat(speedInput.value)); // Animate the change in height of the bar
         const promise2 =  makeTransparent(circle, DELAY_WHEN_DROP / parseFloat(speedInput.value));
-        const promise3 =  moveCircleTo(circle, circle.getAttribute('cx'), circle.getAttribute('cy') - 20, DELAY_BETWEEN_PEGS / parseFloat(speedInput.value));
+        const promise3 =  moveCircleTo(circle, circle.getAttribute('cx'), circle.getAttribute('cy') + 20, DELAY_BETWEEN_PEGS / parseFloat(speedInput.value));
 
         circle.remove(); // Remove the circle from the SVG element
         await Promise.all([promise1, promise2, promise3]);
@@ -169,6 +168,7 @@ async function makeTransparent(circle, duration) {
         function step() {
           const pct = (Date.now() - animationStarted) / duration;
           const val = fromVal + (toVal - fromVal) * pct;
+          console.log(val);
           circle.setAttribute("opacity", val);
           
           if(pct < 1) {
@@ -185,20 +185,17 @@ async function makeTransparent(circle, duration) {
 // Animates the height of a rectangle from its current height to a new height
 async function changeHeightTo(rect, toHeight, duration) {
     return new Promise(async (resolve, reject) => {
-        while(rect.getAttribute('height') !== toHeight){
-            await animateRect(rect, toHeight, duration);
-            resolve();
-        }
+        await animateRect(rect, toHeight, duration);
+        resolve();
     });
 }
 
 // Animates the movement of a circle to a new location
 async function moveCircleTo(circle, cx, cy, duration) {
     return new Promise(async (resolve, reject) => {
-        while(circle.getAttribute('cx') !== cx){
-            await animate(circle, cx, cy, duration);
-            resolve();
-        }
+        // while(circle.getAttribute('cx') !== cx && circle.getAttribute('cy') !== cy){
+        await animate(circle, cx, cy, duration);
+        resolve();
     });
 }
 
