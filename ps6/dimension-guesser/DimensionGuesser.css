@@ -1,0 +1,31 @@
+:root {
+    --row-height: 40px;
+    --picker-width: 300px;
+}
+
+#guessing-rect {
+    border: 3px solid #333;
+    border-radius: 10px;
+    background: rgb(51,51,51);
+    background: linear-gradient(120deg, rgba(50,50,50,0.3) 0%, rgba(100,100,100,0.5) 100%); 
+    margin: auto;
+    margin-top: 20px;
+}
+
+#answer-rect {
+    border: 3px dashed #338;
+    border-radius: 10px;
+    background: rgb(51,51,51);
+    background: linear-gradient(120deg, rgba(50,50,100,0.3) 0%, rgba(100,100,180,0.5) 100%); 
+    margin: auto;
+}
+
+.App {
+    margin: auto;
+    text-align: center;
+}
+
+#cheating-mode {
+    position: absolute;
+    right: 10px;
+}
