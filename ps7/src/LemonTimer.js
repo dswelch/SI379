@@ -10,14 +10,16 @@ function App() {
     startingTasks = [];
   }
 
-  // timer variables
-  let timerGoing = false;
+
+  const [workTimerGoing, setWorkTimerGoing] = React.useState(false);
+  const [breakTimerGoing, setBreakTimerGoing] = React.useState(false);
   let startedTime;
+  let interval;
   const [workTime, setWorkTime] = React.useState(25);
   const [breakTime, setBreakTime] = React.useState(5);
   const timerRef = React.useRef();
 
-  // task variables
+
   const [tasks, setTasks] = React.useState(startingTasks);
   const taskInputRef = React.useRef();
   const workTimeRef = React.useRef();
@@ -27,7 +29,6 @@ function App() {
     startingTaskDescRefs.push(React.createRef());
   }
   const [taskDescRefs, setTaskDescRefs] = React.useState(startingTaskDescRefs);
-
 
   function storeState(newTasks){
     localStorage.setItem("tasks", JSON.stringify(newTasks));
@@ -70,7 +71,15 @@ function App() {
   }
 
   function handleFinish(idx){
-    setTasks(tasks.filter((_, taskIdx) => taskIdx !== idx));
+    // get rid of task in tasks
+    const newTasks = tasks.filter((_, taskIdx) => taskIdx !== idx)
+    setTasks(newTasks);
+    const newTaskRefs = taskDescRefs;
+    // get rid of the reference
+    newTaskRefs.splice(idx, idx);
+    setTaskDescRefs(newTaskRefs);
+    // store the new state
+    storeState(newTasks);
   }
 
   function handleEdit(idx){
@@ -83,25 +92,68 @@ function App() {
 
   function updateDisplay(value) {
     const timer = timerRef.current;
-    console.log(timer);
-    timer.value = (value/1000).toFixed(0);
+    const newTimerVal = (value/1000).toFixed(0);
+    timer.value = newTimerVal;
   }
 
   function startWorkTimer(idx){
-    console.log(timerGoing);
-    timerGoing = true;
-    console.log(timerGoing);
+    setWorkTimerGoing(true);
     startedTime = Date.now();
-    setInterval(updateTimer, 100);
+
+    interval = setInterval(() => {
+      updateWorkTimer(idx);
+    }, 100);
+    updateWorkTimer(idx);
   }
 
-  function updateTimer(){
+  function startBreakTimer(idx){
+    setBreakTimerGoing(true);
+    startedTime = Date.now();
+
+    interval = setInterval(() => {
+      updateBreakTimer(idx);
+    }, 100);
+    updateBreakTimer(idx);
+  }
+
+  function updateWorkTimer(idx){
     let currentRunTime = (workTime*1000) - (Date.now() - startedTime);
-    console.log(workTime);
-    console.log(Date.now());
-    console.log(startedTime);
+    if ((currentRunTime/1000).toFixed(0) === '0'){
+      stopWorkTimer();
+      // addLemon(idx);
+      startBreakTimer(idx);
+      return;
+    }
     updateDisplay(currentRunTime);
   }
+
+  function updateBreakTimer(idx){
+    let currentRunTime = (breakTime*1000) - (Date.now() - startedTime);
+    if ((currentRunTime/1000).toFixed(0) === '0'){
+      stopBreakTimer();
+      startWorkTimer(idx);
+      return;
+    }
+    updateDisplay(currentRunTime);
+  }
+
+  function stopWorkTimer(){
+    setWorkTimerGoing(false);
+    clearInterval(interval);
+  }
+
+  function stopBreakTimer(){
+    setBreakTimerGoing(false);
+    clearInterval(interval);
+  }
+
+  function stopAllTimers(){
+    setWorkTimerGoing(false);
+    setBreakTimerGoing(false);
+    clearInterval(interval);
+  }
+
+  const timerGoing = workTimerGoing || breakTimerGoing;
 
   return (
     <div className="App">
@@ -113,14 +165,17 @@ function App() {
           <button onClick={() => handleFinish(idx)}>Finish</button>
           <input ref={taskDescRefs[idx]} placeholder="New task description here" type="text"></input>
           <button onClick={() => handleEdit(idx)}>Edit Task</button> 
+          {!timerGoing && <button onClick={() => startWorkTimer(idx)}>Start Work</button>}
         </li>) }
       </ul>
-      <label>Work Time</label>
+      {!timerGoing && <div><label>Work Time </label>
       <input ref={workTimeRef} min="1" max="120" type="number" id="workTimeInput" onChange={changeWorkTime} value={workTime}></input>
-      <label>Break Time</label>
-      <input ref={breakTimeRef} min="1" max="120" type="number" id="breakTimeInput" onChange={changeBreakTime} value={breakTime}></input>
-      <button onClick={startWorkTimer}>Start Timer</button>
+      <label>Break Time </label>
+      <input ref={breakTimeRef} min="1" max="120" type="number" id="breakTimeInput" onChange={changeBreakTime} value={breakTime}></input></div>}
+      {workTimerGoing && <h2>Work Timer:</h2>}&nbsp;
+      {breakTimerGoing && <h2>Break Timer:</h2>}&nbsp;
       <output ref={timerRef}></output>
+      {timerGoing && <button onClick={stopAllTimers}>Cancel</button>}
     </div>
   );
 }
