@@ -9,41 +9,58 @@ function App() {
     console.log(e);
     startingTasks = [];
   }
+  let startingLemons;
+  try {
+    startingLemons = JSON.parse(localStorage.getItem("lemons") || '[]');
+  }
+  catch (e){
+    console.log(e);
+    startingLemons = [];
+  }
 
-
+  console.log(startingTasks);
   const [workTimerGoing, setWorkTimerGoing] = React.useState(false);
   const [breakTimerGoing, setBreakTimerGoing] = React.useState(false);
   let startedTime;
-  let interval;
+  const intervalRef = React.useRef();
   const [workTime, setWorkTime] = React.useState(25);
   const [breakTime, setBreakTime] = React.useState(5);
   const timerRef = React.useRef();
 
 
   const [tasks, setTasks] = React.useState(startingTasks);
+  const [lemons, setLemons] = React.useState(startingLemons);
   const taskInputRef = React.useRef();
   const workTimeRef = React.useRef();
   const breakTimeRef = React.useRef();
   const startingTaskDescRefs = [];
+
   for (let i = 0; i < startingTasks.length; i++){
     startingTaskDescRefs.push(React.createRef());
   }
   const [taskDescRefs, setTaskDescRefs] = React.useState(startingTaskDescRefs);
 
-  function storeState(newTasks){
+  function storeTasks(newTasks){
     localStorage.setItem("tasks", JSON.stringify(newTasks));
+  }
+
+  function storeLemons(newLemons){
+    localStorage.setItem("lemons", JSON.stringify(newLemons));
   }
 
   function addTask (){
     const taskInput = taskInputRef.current;
     if (taskInput.value !== ""){
       const newTasks = tasks.concat(taskInput.value);
+      const newLemons = lemons.concat(0);
       setTasks(newTasks);
+      setLemons(newLemons);
       taskInput.value = "";
       const newTaskRefs = taskDescRefs;
       newTaskRefs.push(React.createRef());
       setTaskDescRefs(newTaskRefs);
-      storeState(newTasks);
+      storeTasks(newTasks);
+      storeLemons(newLemons);
     }
   }
 
@@ -67,19 +84,22 @@ function App() {
     const newTasks = [...tasks];
     newTasks[idx] = newTaskName;
     setTasks(newTasks);
-    storeState(newTasks);
+    storeTasks(newTasks);
   }
 
   function handleFinish(idx){
     // get rid of task in tasks
-    const newTasks = tasks.filter((_, taskIdx) => taskIdx !== idx)
+    const newTasks = tasks.filter((_, taskIdx) => taskIdx !== idx);
+    const newLemons = lemons.filter((_, lemonIdx) => lemonIdx !== idx);
     setTasks(newTasks);
+    setLemons(newLemons);
     const newTaskRefs = taskDescRefs;
     // get rid of the reference
     newTaskRefs.splice(idx, idx);
     setTaskDescRefs(newTaskRefs);
     // store the new state
-    storeState(newTasks);
+    storeTasks(newTasks);
+    storeLemons(newLemons);
   }
 
   function handleEdit(idx){
@@ -93,14 +113,13 @@ function App() {
   function updateDisplay(value) {
     const timer = timerRef.current;
     const newTimerVal = (value/1000).toFixed(0);
-    timer.value = newTimerVal;
+    timer.innerText = newTimerVal.toString();
   }
 
   function startWorkTimer(idx){
     setWorkTimerGoing(true);
     startedTime = Date.now();
-
-    interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       updateWorkTimer(idx);
     }, 100);
     updateWorkTimer(idx);
@@ -110,7 +129,7 @@ function App() {
     setBreakTimerGoing(true);
     startedTime = Date.now();
 
-    interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       updateBreakTimer(idx);
     }, 100);
     updateBreakTimer(idx);
@@ -118,9 +137,16 @@ function App() {
 
   function updateWorkTimer(idx){
     let currentRunTime = (workTime*1000) - (Date.now() - startedTime);
+    // if done
     if ((currentRunTime/1000).toFixed(0) === '0'){
+      // stop the timer
       stopWorkTimer();
-      // addLemon(idx);
+      // add a lemon
+      const newLemons = lemons;
+      newLemons[idx] += 1;
+      setLemons(newLemons);
+      storeLemons(newLemons);
+      // start the break
       startBreakTimer(idx);
       return;
     }
@@ -139,18 +165,19 @@ function App() {
 
   function stopWorkTimer(){
     setWorkTimerGoing(false);
-    clearInterval(interval);
+    clearInterval(intervalRef.current);
   }
 
   function stopBreakTimer(){
     setBreakTimerGoing(false);
-    clearInterval(interval);
+    clearInterval(intervalRef.current);
   }
 
   function stopAllTimers(){
     setWorkTimerGoing(false);
     setBreakTimerGoing(false);
-    clearInterval(interval);
+    clearInterval(intervalRef.current);
+    timerRef.current.innerText = '';
   }
 
   const timerGoing = workTimerGoing || breakTimerGoing;
@@ -172,9 +199,9 @@ function App() {
       <input ref={workTimeRef} min="1" max="120" type="number" id="workTimeInput" onChange={changeWorkTime} value={workTime}></input>
       <label>Break Time </label>
       <input ref={breakTimeRef} min="1" max="120" type="number" id="breakTimeInput" onChange={changeBreakTime} value={breakTime}></input></div>}
-      {workTimerGoing && <h2>Work Timer:</h2>}&nbsp;
-      {breakTimerGoing && <h2>Break Timer:</h2>}&nbsp;
-      <output ref={timerRef}></output>
+      {workTimerGoing && <h2>Work Timer:</h2>}
+      {breakTimerGoing && <h2>Break Timer:</h2>}
+      <div ref={timerRef}></div>
       {timerGoing && <button onClick={stopAllTimers}>Cancel</button>}
     </div>
   );
