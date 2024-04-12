@@ -1,4 +1,5 @@
 import React from "react";
+import checkmark from './checkmark.webp'
 
 function App() {
   let startingTasks;
@@ -18,7 +19,6 @@ function App() {
     startingLemons = [];
   }
 
-  console.log(startingTasks);
   const [workTimerGoing, setWorkTimerGoing] = React.useState(false);
   const [breakTimerGoing, setBreakTimerGoing] = React.useState(false);
   let startedTime;
@@ -26,7 +26,6 @@ function App() {
   const [workTime, setWorkTime] = React.useState(25);
   const [breakTime, setBreakTime] = React.useState(5);
   const timerRef = React.useRef();
-
 
   const [tasks, setTasks] = React.useState(startingTasks);
   const [lemons, setLemons] = React.useState(startingLemons);
@@ -52,7 +51,7 @@ function App() {
     const taskInput = taskInputRef.current;
     if (taskInput.value !== ""){
       const newTasks = tasks.concat(taskInput.value);
-      const newLemons = lemons.concat(0);
+      const newLemons = lemons.concat([[]]);
       setTasks(newTasks);
       setLemons(newLemons);
       taskInput.value = "";
@@ -112,8 +111,9 @@ function App() {
 
   function updateDisplay(value) {
     const timer = timerRef.current;
-    const newTimerVal = (value/1000).toFixed(0);
-    timer.innerText = newTimerVal.toString();
+    const minutes = Math.floor(value / 60000);
+    const seconds = ((value % 60000) / 1000).toFixed(0);
+    timer.innerText = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   }
 
   function startWorkTimer(idx){
@@ -136,14 +136,14 @@ function App() {
   }
 
   function updateWorkTimer(idx){
-    let currentRunTime = (workTime*1000) - (Date.now() - startedTime);
+    let currentRunTime = (workTime*60000) - (Date.now() - startedTime);
     // if done
-    if ((currentRunTime/1000).toFixed(0) === '0'){
+    if (currentRunTime <= 0){
       // stop the timer
       stopWorkTimer();
       // add a lemon
       const newLemons = lemons;
-      newLemons[idx] += 1;
+      newLemons[idx].push("lemon");
       setLemons(newLemons);
       storeLemons(newLemons);
       // start the break
@@ -154,8 +154,8 @@ function App() {
   }
 
   function updateBreakTimer(idx){
-    let currentRunTime = (breakTime*1000) - (Date.now() - startedTime);
-    if ((currentRunTime/1000).toFixed(0) === '0'){
+    let currentRunTime = (breakTime*60000) - (Date.now() - startedTime);
+    if (currentRunTime <= 0){
       stopBreakTimer();
       startWorkTimer(idx);
       return;
@@ -181,6 +181,7 @@ function App() {
   }
 
   const timerGoing = workTimerGoing || breakTimerGoing;
+  const tasksExist = tasks.length;
 
   return (
     <div className="App">
@@ -189,10 +190,11 @@ function App() {
       <button id="addTaskButton" onClick={addTask}>Add Task</button>
       <ul> { tasks.map((task, idx) => <li key={idx}>
           {task}
-          <button onClick={() => handleFinish(idx)}>Finish</button>
+          {!timerGoing && <button onClick={() => handleFinish(idx)}>Finish</button>}
           <input ref={taskDescRefs[idx]} placeholder="New task description here" type="text"></input>
           <button onClick={() => handleEdit(idx)}>Edit Task</button> 
           {!timerGoing && <button onClick={() => startWorkTimer(idx)}>Start Work</button>}
+          { tasksExist && lemons[idx].map((_, lemonIdx) => <img key={lemonIdx} src={checkmark} width="20px" height="20px" />)}
         </li>) }
       </ul>
       {!timerGoing && <div><label>Work Time </label>
