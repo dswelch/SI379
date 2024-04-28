@@ -13,6 +13,7 @@ let snakeY = parseInt(snakeHead.getAttribute('y'));
 let locationArray = [[snakeX, snakeY]];
 let foodLocation = [food.getAttribute('x'), food.getAttribute('y')];
 let snakeTailArray = [snakeHead];
+let occupiedBlocks = new Set([snakeX, snakeY]);
 
 function yOut(y){
     // hardcoded, assuming border will not move
@@ -91,6 +92,18 @@ function eatFood(){
     moveFood();
 }
 
+// needs locationArray in state before head movement
+// [0, 0], [0, 1], [1, 1]
+function moveTail(){
+    for (let i=locationArray.length-1; i>0;i--){
+        const newX = locationArray[i-1][0];
+        const newY = locationArray[i-1][1];
+        snakeTailArray[i].setAttribute('x', newX);
+        snakeTailArray[i].setAttribute('y', newY);
+        locationArray[i] = [newX, newY];
+    }
+}
+
 function moveSnake(){
     if (currentDirection === 'l'){
         snakeX = snakeX - MOVE_DISTANCE;
@@ -101,19 +114,8 @@ function moveSnake(){
             eatFood();
         }
         snakeHead.setAttribute('x', snakeX);
-        for (let i=1; i<locationArray.length;i++){
-            const newX = locationArray[i-1][0];
-            const newY = locationArray[i-1][1];
-            snakeTailArray[i].setAttribute('x', newX);
-            snakeTailArray[i].setAttribute('y', newY);
-            if (i > 1){
-                locationArray[i-1] = locationArray[i-2];
-            }
-        }
+        moveTail();
         locationArray[0][0] = snakeX;
-        if (locationArray.length > 1){
-            locationArray[locationArray.length-1] = locationArray[locationArray.length-2];
-        }
     }
     else if (currentDirection === 'r'){
         snakeX = snakeX + MOVE_DISTANCE;
@@ -124,19 +126,8 @@ function moveSnake(){
             eatFood();
         }
         snakeHead.setAttribute('x', snakeX);
-        for (let i=1; i<locationArray.length;i++){
-            const newX = locationArray[i-1][0];
-            const newY = locationArray[i-1][1];
-            snakeTailArray[i].setAttribute('x', newX);
-            snakeTailArray[i].setAttribute('y', newY);
-            if (i > 1){
-                locationArray[i-1] = locationArray[i-2];
-            }
-        }
+        moveTail();
         locationArray[0][0] = snakeX;
-        if (locationArray.length > 1){
-            locationArray[locationArray.length-1] = locationArray[locationArray.length-2];
-        }
     }
     else if (currentDirection === 'u'){
         snakeY = snakeY - MOVE_DISTANCE;
@@ -147,19 +138,8 @@ function moveSnake(){
             eatFood();
         }
         snakeHead.setAttribute('y', snakeY);
-        for (let i=1; i<locationArray.length;i++){
-            const newX = locationArray[i-1][0];
-            const newY = locationArray[i-1][1];
-            snakeTailArray[i].setAttribute('x', newX);
-            snakeTailArray[i].setAttribute('y', newY);
-            if (i > 1){
-                locationArray[i-1] = locationArray[i-2];
-            }
-        }
+        moveTail();
         locationArray[0][1] = snakeY;
-        if (locationArray.length > 1){
-            locationArray[locationArray.length-1] = locationArray[locationArray.length-2];
-        }
     }
     else if (currentDirection === 'd'){
         snakeY = snakeY + MOVE_DISTANCE;
@@ -170,19 +150,8 @@ function moveSnake(){
             eatFood();
         }
         snakeHead.setAttribute('y', snakeY);
-        for (let i=1; i<locationArray.length;i++){
-            const newX = locationArray[i-1][0];
-            const newY = locationArray[i-1][1];
-            snakeTailArray[i].setAttribute('x', newX);
-            snakeTailArray[i].setAttribute('y', newY);
-            if (i > 1){
-                locationArray[i-1] = locationArray[i-2];
-            }
-        }
+        moveTail();
         locationArray[0][1] = snakeY;
-        if (locationArray.length > 1){
-            locationArray[locationArray.length-1] = locationArray[locationArray.length-2];
-        }
     }
 }
 
