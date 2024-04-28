@@ -11,6 +11,8 @@ let lost = false;
 let snakeX = parseInt(snakeHead.getAttribute('x'));
 let snakeY = parseInt(snakeHead.getAttribute('y'));
 let locationArray = [[snakeX, snakeY]];
+let foodLocation = [food.getAttribute('x'), food.getAttribute('y')];
+let snakeTailArray = [snakeHead];
 
 function yOut(y){
     // hardcoded, assuming border will not move
@@ -43,19 +45,50 @@ function getFoodLocation(xMax, yMax){
     const yVal = Math.floor(Math.random() * yMax);
     while(locationArray.find(element => isEqual(element, [xVal, yVal]))){
         xVal = Math.floor(Math.random() * xMax);
-        console.log(xVal);
         yVal = Math.floor(Math.random() * yMax);
-        console.log(yVal);
     }
     return [xVal, yVal];
 }
 
-function placeFood(){
+function onFood(){
+    if ((Math.abs(snakeX - foodLocation[0]) < 15) && (Math.abs(snakeY - foodLocation[1]) < 15)){
+        return true;
+    }
+    return false;
+}
+
+function moveFood(){
     // grid is 25 x 18
     const xMax = 24;
     const yMax = 17;
-    const [xVal, yVal] = getFoodLocation(xMax, yMax);
-    console.log(xVal, yVal);
+    let [xVal, yVal] = getFoodLocation(xMax, yMax);
+    xVal *= 20;
+    yVal *= 20;
+    food.setAttribute('x', xVal);
+    food.setAttribute('y', yVal);
+    foodLocation = [xVal, yVal];
+}
+
+function eatFood(){
+    // grab current end of tail
+    const [xEnd, yEnd] = locationArray[locationArray.length-1];
+    // wait a tick before creating new block
+    setTimeout(() => {
+        // create new block
+        var svgns = "http://www.w3.org/2000/svg";
+        var new_rect = document.createElementNS(svgns, "rect");
+        // set location to last part of tail
+        new_rect.setAttributeNS(null, 'x', xEnd);
+        new_rect.setAttributeNS(null, 'y', yEnd);
+        new_rect.setAttributeNS(null, 'width', '20px');
+        new_rect.setAttributeNS(null, 'height', '20px');
+        new_rect.setAttributeNS(null, 'fill', 'green');
+        svgElement.appendChild(new_rect);
+        locationArray.push([xEnd, yEnd]);
+        snakeTailArray.push(new_rect);
+    }, 100);
+    // TODO increase score
+    moveFood();
 }
 
 function moveSnake(){
@@ -64,32 +97,92 @@ function moveSnake(){
         if (xOut(snakeX)){
             loseScreen();
         }
+        if(onFood()){
+            eatFood();
+        }
         snakeHead.setAttribute('x', snakeX);
+        for (let i=1; i<locationArray.length;i++){
+            const newX = locationArray[i-1][0];
+            const newY = locationArray[i-1][1];
+            snakeTailArray[i].setAttribute('x', newX);
+            snakeTailArray[i].setAttribute('y', newY);
+            if (i > 1){
+                locationArray[i-1] = locationArray[i-2];
+            }
+        }
         locationArray[0][0] = snakeX;
+        if (locationArray.length > 1){
+            locationArray[locationArray.length-1] = locationArray[locationArray.length-2];
+        }
     }
     else if (currentDirection === 'r'){
         snakeX = snakeX + MOVE_DISTANCE;
         if (xOut(snakeX)){
             loseScreen();
         }
+        if(onFood()){
+            eatFood();
+        }
         snakeHead.setAttribute('x', snakeX);
+        for (let i=1; i<locationArray.length;i++){
+            const newX = locationArray[i-1][0];
+            const newY = locationArray[i-1][1];
+            snakeTailArray[i].setAttribute('x', newX);
+            snakeTailArray[i].setAttribute('y', newY);
+            if (i > 1){
+                locationArray[i-1] = locationArray[i-2];
+            }
+        }
         locationArray[0][0] = snakeX;
+        if (locationArray.length > 1){
+            locationArray[locationArray.length-1] = locationArray[locationArray.length-2];
+        }
     }
     else if (currentDirection === 'u'){
         snakeY = snakeY - MOVE_DISTANCE;
         if (yOut(snakeY)){
             loseScreen();
         }
+        if(onFood()){
+            eatFood();
+        }
         snakeHead.setAttribute('y', snakeY);
+        for (let i=1; i<locationArray.length;i++){
+            const newX = locationArray[i-1][0];
+            const newY = locationArray[i-1][1];
+            snakeTailArray[i].setAttribute('x', newX);
+            snakeTailArray[i].setAttribute('y', newY);
+            if (i > 1){
+                locationArray[i-1] = locationArray[i-2];
+            }
+        }
         locationArray[0][1] = snakeY;
+        if (locationArray.length > 1){
+            locationArray[locationArray.length-1] = locationArray[locationArray.length-2];
+        }
     }
     else if (currentDirection === 'd'){
         snakeY = snakeY + MOVE_DISTANCE;
         if (yOut(snakeY)){
             loseScreen();
         }
+        if(onFood()){
+            eatFood();
+        }
         snakeHead.setAttribute('y', snakeY);
+        for (let i=1; i<locationArray.length;i++){
+            const newX = locationArray[i-1][0];
+            const newY = locationArray[i-1][1];
+            snakeTailArray[i].setAttribute('x', newX);
+            snakeTailArray[i].setAttribute('y', newY);
+            if (i > 1){
+                locationArray[i-1] = locationArray[i-2];
+            }
+        }
         locationArray[0][1] = snakeY;
+        if (locationArray.length > 1){
+            locationArray[locationArray.length-1] = locationArray[locationArray.length-2];
+        }
     }
 }
 
@@ -141,7 +234,6 @@ function handleKeyDown(event) {
     }
 }
 window.addEventListener('keydown', handleKeyDown);
-placeFood();
 
 function loseScreen(){
     lost = true;
@@ -154,6 +246,13 @@ function loseScreen(){
     snakeY = 50;
     snakeHead.setAttribute('y', snakeY);
     locationArray = [[snakeX, snakeY]];
+
+    // reset food
+    foodLocation = [112.5, 52.5];
+    food.setAttribute('x', foodLocation[0]);
+    food.setAttribute('y', foodLocation[1]);
+
+    // put in restart button
     const restartButton = document.createElement("button");
     restartButton.innerText = "Restart game?";
     document.body.append(restartButton);
