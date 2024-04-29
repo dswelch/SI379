@@ -1,6 +1,8 @@
-const MOVE_DISTANCE = 10;
+const MOVE_DISTANCE = 20;
+const TICK_TIME = 150;
 let currentDirection;
 let moveInterval;
+let globalCounter = 0;
 
 const svgElement = document.querySelector('svg');
 const snakeHead = document.querySelector('#snake-head');
@@ -13,7 +15,7 @@ let snakeY = parseInt(snakeHead.getAttribute('y'));
 let locationArray = [[snakeX, snakeY]];
 let foodLocation = [food.getAttribute('x'), food.getAttribute('y')];
 let snakeTailArray = [snakeHead];
-let occupiedBlocks = new Set([snakeX, snakeY]);
+let occupiedBlocks = new Set([`${snakeX},${snakeY}`]);
 
 function yOut(y){
     // hardcoded, assuming border will not move
@@ -63,6 +65,8 @@ function moveFood(){
     const xMax = 24;
     const yMax = 17;
     let [xVal, yVal] = getFoodLocation(xMax, yMax);
+    xVal += 1;
+    yVal += 1;
     xVal *= 20;
     yVal *= 20;
     food.setAttribute('x', xVal);
@@ -87,14 +91,16 @@ function eatFood(){
         svgElement.appendChild(new_rect);
         locationArray.push([xEnd, yEnd]);
         snakeTailArray.push(new_rect);
-    }, 100);
+    }, TICK_TIME);
     // TODO increase score
     moveFood();
 }
 
 // needs locationArray in state before head movement
-// [0, 0], [0, 1], [1, 1]
 function moveTail(){
+    const xToDelete = locationArray[locationArray.length-1][0];
+    const yToDelete = locationArray[locationArray.length-1][1];
+    occupiedBlocks.delete(`${xToDelete},${yToDelete}`);
     for (let i=locationArray.length-1; i>0;i--){
         const newX = locationArray[i-1][0];
         const newY = locationArray[i-1][1];
@@ -110,40 +116,39 @@ function moveSnake(){
         if (xOut(snakeX)){
             loseScreen();
         }
+        if (occupiedBlocks.has(`${snakeX},${snakeY}`)){
+            loseScreen();
+        }
         if(onFood()){
             eatFood();
         }
         snakeHead.setAttribute('x', snakeX);
         moveTail();
         locationArray[0][0] = snakeX;
+        occupiedBlocks.add(`${snakeX},${snakeY}`);
     }
     else if (currentDirection === 'r'){
         snakeX = snakeX + MOVE_DISTANCE;
         if (xOut(snakeX)){
             loseScreen();
         }
+        if (occupiedBlocks.has(`${snakeX},${snakeY}`)){
+            loseScreen();
+        }
         if(onFood()){
             eatFood();
         }
         snakeHead.setAttribute('x', snakeX);
         moveTail();
         locationArray[0][0] = snakeX;
+        occupiedBlocks.add(`${snakeX},${snakeY}`);
     }
     else if (currentDirection === 'u'){
         snakeY = snakeY - MOVE_DISTANCE;
         if (yOut(snakeY)){
             loseScreen();
         }
-        if(onFood()){
-            eatFood();
-        }
-        snakeHead.setAttribute('y', snakeY);
-        moveTail();
-        locationArray[0][1] = snakeY;
-    }
-    else if (currentDirection === 'd'){
-        snakeY = snakeY + MOVE_DISTANCE;
-        if (yOut(snakeY)){
+        if (occupiedBlocks.has(`${snakeX},${snakeY}`)){
             loseScreen();
         }
         if(onFood()){
@@ -152,6 +157,27 @@ function moveSnake(){
         snakeHead.setAttribute('y', snakeY);
         moveTail();
         locationArray[0][1] = snakeY;
+        occupiedBlocks.add(`${snakeX},${snakeY}`);
+    }
+    else if (currentDirection === 'd'){
+        snakeY = snakeY + MOVE_DISTANCE;
+        if (yOut(snakeY)){
+            loseScreen();
+        }
+        // function logSetElements(value1) {
+        //     console.log(value1);
+        // }
+        // occupiedBlocks.forEach(logSetElements);
+        if (occupiedBlocks.has(`${snakeX},${snakeY}`)){
+            loseScreen();
+        }
+        if(onFood()){
+            eatFood();
+        }
+        snakeHead.setAttribute('y', snakeY);
+        moveTail();
+        locationArray[0][1] = snakeY;
+        occupiedBlocks.add(`${snakeX},${snakeY}`);
     }
 }
 
@@ -160,7 +186,7 @@ function snakeGo () {
         currentDirection = undefined;
         snakeMoving = true;
         clearInterval(moveInterval);
-        moveInterval = setInterval(moveSnake, 100);
+        moveInterval = setInterval(moveSnake, TICK_TIME);
         moveSnake();
     }
 }
@@ -214,7 +240,16 @@ function loseScreen(){
     snakeHead.setAttribute('x', snakeX);
     snakeY = 50;
     snakeHead.setAttribute('y', snakeY);
+    
+    // reset tail
+    for (let i=1;i<snakeTailArray.length;i++){
+        snakeTailArray[i].remove();
+    }
+    snakeTailArray = [snakeHead];
     locationArray = [[snakeX, snakeY]];
+
+    // reset occupiedBlocks
+    occupiedBlocks = new Set([`${snakeX},${snakeY}`]);
 
     // reset food
     foodLocation = [112.5, 52.5];
