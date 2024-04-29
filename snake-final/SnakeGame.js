@@ -1,12 +1,31 @@
+import {Howl} from 'howler';
+
+const CHOMP_SOUND = 'sounds/chomp.mp3'
+const HIGH_SCORE_SOUND = 'sounds/high_score.mp3'
+const LOSE_SOUND = 'sounds/lose.mp3'
+
 const MOVE_DISTANCE = 20;
 const TICK_TIME = 150;
 let currentDirection;
 let moveInterval;
-let globalCounter = 0;
+let currentScore = 0;
+let newHighScore = false;
 
 const svgElement = document.querySelector('svg');
 const snakeHead = document.querySelector('#snake-head');
 const food = document.querySelector('#food');
+const highScoreElem = document.querySelector('#high-score');
+const currentScoreElem = document.querySelector('#current-score');
+
+let highScore;
+try {
+    highScore = JSON.parse(parseInt(localStorage.getItem("highScore")) || 0);
+}
+catch (e){
+    console.log(e);
+    highScore = 0;
+}
+highScoreElem.innerText = `Your high score: ${highScore}`;
 
 let snakeMoving = false;
 let lost = false;
@@ -46,7 +65,7 @@ function getFoodLocation(xMax, yMax){
     }
     const xVal = Math.floor(Math.random() * xMax);
     const yVal = Math.floor(Math.random() * yMax);
-    while(locationArray.find(element => isEqual(element, [xVal, yVal]))){
+    while(occupiedBlocks.has((`${xVal},${yVal}`))){
         xVal = Math.floor(Math.random() * xMax);
         yVal = Math.floor(Math.random() * yMax);
     }
@@ -74,7 +93,21 @@ function moveFood(){
     foodLocation = [xVal, yVal];
 }
 
+function updateScore(){
+    currentScoreElem.innerText = `Your current score: ${currentScore}`;
+    if (currentScore > highScore){
+        newHighScore = true;
+        highScore = currentScore;
+        highScoreElem.innerText = `Your high score: ${highScore}`;
+        localStorage.setItem("highScore", JSON.stringify(highScore));
+    }
+}
+
 function eatFood(){
+    var sound = new Howl({
+        src: [CHOMP_SOUND]
+    });
+    sound.play();
     // grab current end of tail
     const [xEnd, yEnd] = locationArray[locationArray.length-1];
     // wait a tick before creating new block
@@ -92,7 +125,8 @@ function eatFood(){
         locationArray.push([xEnd, yEnd]);
         snakeTailArray.push(new_rect);
     }, TICK_TIME);
-    // TODO increase score
+    currentScore++;
+    updateScore(currentScore);
     moveFood();
 }
 
@@ -228,41 +262,80 @@ function handleKeyDown(event) {
         }
     }
 }
-window.addEventListener('keydown', handleKeyDown);
 
 function loseScreen(){
-    lost = true;
-    svgElement.remove();
-    clearInterval(moveInterval);
-    // reset snakeHead
-    snakeMoving = false;
-    snakeX = 40;
-    snakeHead.setAttribute('x', snakeX);
-    snakeY = 50;
-    snakeHead.setAttribute('y', snakeY);
-    
-    // reset tail
-    for (let i=1;i<snakeTailArray.length;i++){
-        snakeTailArray[i].remove();
+    if (!lost){
+        var sound = new Howl({
+            src: [LOSE_SOUND]
+        });
+        sound.play();
+
+        lost = true;
+        svgElement.remove();
+        clearInterval(moveInterval);
+        // reset snakeHead
+        snakeMoving = false;
+        snakeX = 40;
+        snakeHead.setAttribute('x', snakeX);
+        snakeY = 50;
+        snakeHead.setAttribute('y', snakeY);
+        
+        // reset tail
+        for (let i=1;i<snakeTailArray.length;i++){
+            snakeTailArray[i].remove();
+        }
+        snakeTailArray = [snakeHead];
+        locationArray = [[snakeX, snakeY]];
+
+        // reset occupiedBlocks
+        occupiedBlocks = new Set([`${snakeX},${snakeY}`]);
+
+        // reset food
+        foodLocation = [112.5, 52.5];
+        food.setAttribute('x', foodLocation[0]);
+        food.setAttribute('y', foodLocation[1]);
+
+        // reset scores
+        currentScoreElem.innerText = `This run's score: ${currentScore}`;
+        currentScore = 0;
+
+        // check for new high score
+        let newHighScoreElem;
+        if (newHighScore){
+            sound.on('end', function(){
+                var sound = new Howl({
+                    src: [HIGH_SCORE_SOUND]
+                });
+                sound.play();
+              });
+            newHighScoreElem = document.createElement("div");
+            newHighScoreElem.innerText = "New high score!";
+            document.body.append(newHighScoreElem);
+        }
+
+        // put in restart button
+        const restartButton = document.createElement("button");
+        restartButton.innerText = "Restart game?";
+        document.body.append(restartButton);
+        restartButton.addEventListener("click", () => {
+            if (newHighScore){
+                newHighScore = false;
+                newHighScoreElem.remove();
+            }
+            lost = false;
+            document.body.append(svgElement);
+            currentScoreElem.innerText = `Your current score: ${currentScore}`;
+            document.body.append(highScoreElem);
+            document.body.append(currentScoreElem);
+            restartButton.remove();
+        });
     }
-    snakeTailArray = [snakeHead];
-    locationArray = [[snakeX, snakeY]];
-
-    // reset occupiedBlocks
-    occupiedBlocks = new Set([`${snakeX},${snakeY}`]);
-
-    // reset food
-    foodLocation = [112.5, 52.5];
-    food.setAttribute('x', foodLocation[0]);
-    food.setAttribute('y', foodLocation[1]);
-
-    // put in restart button
-    const restartButton = document.createElement("button");
-    restartButton.innerText = "Restart game?";
-    document.body.append(restartButton);
-    restartButton.addEventListener("click", () => {
-        lost = false;
-        document.body.append(svgElement);
-        restartButton.remove();
-    });
 }
+
+updateScore();
+window.addEventListener("keydown", function(e) {
+    if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.code) > -1) {
+        e.preventDefault();
+    }
+}, false);
+window.addEventListener('keydown', handleKeyDown);

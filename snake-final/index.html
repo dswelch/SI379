@@ -6,11 +6,13 @@
 		<title>Snake</title>
 	</head>
 	<body>
-        <h1>Snake!</h1>
-		<svg width="600" height="600">
+        <h1 style="font-size:30px">Move with arrow keys and eat as many brown apples as you can!</h1>
+		<svg width="550" height="400">
             <rect width="500" height="360" x="10" y="10" style="fill:rgb(255,255,255);stroke-width:3;stroke:gray"/>
             <rect id="snake-head" width='20px' height='20px' x='40' y='50' style="fill:green;stroke-width:4;stroke:black"/>
             <rect id="food" width='15px' height='15px' x='112.5' y='52.5' fill='brown'/>
         </svg>
+		<h2 id="high-score" y='400'>Your high score: 0</h2>
+		<h2 id="current-score" y='650'>Your current score: 0</h2>
 	</body>
 </html>

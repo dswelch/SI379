@@ -1,0 +1,13 @@
+{
+  "scripts": {
+    "dev": "vite --open",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "howler": "^2.2.4"
+  },
+  "devDependencies": {
+    "vite": "^5.2.10"
+  }
+}
